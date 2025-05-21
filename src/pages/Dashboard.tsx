@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { 
@@ -10,13 +9,9 @@ import {
   ArrowDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  getEmployees, 
-  getDepartments, 
-  getLeaveRequests,
-  getEmployeeLeaveRequests
-} from "@/lib/api";
-import { Employee, Department, LeaveRequest } from "@/types";
+import EmployeeService, { Employee } from "@/api/employee.service";
+import DepartmentService, { Department } from "@/api/department.service";
+import LeaveService, { LeaveRequest } from "@/api/leave.service";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
@@ -36,9 +31,9 @@ export default function Dashboard() {
         if (isAdmin) {
           // Admin sees all data
           const [empData, deptData, leaveData] = await Promise.all([
-            getEmployees(),
-            getDepartments(),
-            getLeaveRequests()
+            EmployeeService.getAll(),
+            DepartmentService.getAll(),
+            LeaveService.getAll()
           ]);
           
           setEmployees(empData);
@@ -46,7 +41,7 @@ export default function Dashboard() {
           setLeaveRequests(leaveData);
         } else {
           // Employee sees only their leave requests
-          const leaveData = await getEmployeeLeaveRequests(user?.id || "");
+          const leaveData = await LeaveService.getMyRequests();
           setLeaveRequests(leaveData);
         }
       } catch (error) {
@@ -164,7 +159,7 @@ function AdminDashboard({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left">
-                      <th className="px-4 py-2 font-medium">Employee</th>
+                      <th className="px-4 py-2 font-medium">Employee ID</th>
                       <th className="px-4 py-2 font-medium">Type</th>
                       <th className="px-4 py-2 font-medium">Dates</th>
                       <th className="px-4 py-2 font-medium">Status</th>
@@ -173,7 +168,7 @@ function AdminDashboard({
                   <tbody>
                     {leaveRequests.slice(0, 5).map((request) => (
                       <tr key={request.id}>
-                        <td className="px-4 py-2">{request.employeeName}</td>
+                        <td className="px-4 py-2">{request.employeeId}</td>
                         <td className="px-4 py-2">{request.type}</td>
                         <td className="px-4 py-2">
                           {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
@@ -210,7 +205,6 @@ function AdminDashboard({
                   <thead>
                     <tr className="text-left">
                       <th className="px-4 py-2 font-medium">Department</th>
-                      <th className="px-4 py-2 font-medium">Manager</th>
                       <th className="px-4 py-2 font-medium text-right">Employees</th>
                     </tr>
                   </thead>
@@ -218,7 +212,6 @@ function AdminDashboard({
                     {departments.map((dept) => (
                       <tr key={dept.id}>
                         <td className="px-4 py-2">{dept.name}</td>
-                        <td className="px-4 py-2">{dept.managerName}</td>
                         <td className="px-4 py-2 text-right">{dept.employeeCount}</td>
                       </tr>
                     ))}
@@ -297,10 +290,6 @@ function EmployeeDashboard({
                 <div className="flex justify-between">
                   <span className="font-medium">Reason:</span>
                   <span>{upcomingLeave.reason}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Comments:</span>
-                  <span>{upcomingLeave.comments || "No comments"}</span>
                 </div>
               </div>
             </CardContent>

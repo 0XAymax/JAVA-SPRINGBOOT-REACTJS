@@ -2,6 +2,7 @@ package com.aura.staffmanager.controller;
 
 import com.aura.staffmanager.dto.employee.CreateEmployeeRequest;
 import com.aura.staffmanager.dto.employee.EmployeeResponse;
+import com.aura.staffmanager.dto.employee.UpdateEmployeeRequest;
 import com.aura.staffmanager.entity.Employee;
 import com.aura.staffmanager.service.EmployeeService;
 import jakarta.validation.Valid;
@@ -41,8 +42,8 @@ public class EmployeeController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EmployeeResponse> updateEmployee(
             @PathVariable Long id,
-            @Valid @RequestBody Employee employee) {
-        return ResponseEntity.ok(employeeService.updateEmployee(id, employee));
+            @Valid @RequestBody UpdateEmployeeRequest request) {
+        return ResponseEntity.ok(employeeService.updateEmployee(id, request));
     }
 
     @DeleteMapping("/{id}")

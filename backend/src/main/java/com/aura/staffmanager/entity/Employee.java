@@ -25,7 +25,7 @@ public class Employee {
     private String phone;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department", nullable = false)
+    @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
     @Column(nullable = false)

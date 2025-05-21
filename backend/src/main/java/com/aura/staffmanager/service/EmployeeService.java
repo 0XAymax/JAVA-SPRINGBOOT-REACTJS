@@ -2,6 +2,7 @@ package com.aura.staffmanager.service;
 
 import com.aura.staffmanager.dto.employee.CreateEmployeeRequest;
 import com.aura.staffmanager.dto.employee.EmployeeResponse;
+import com.aura.staffmanager.dto.employee.UpdateEmployeeRequest;
 import com.aura.staffmanager.entity.Department;
 import com.aura.staffmanager.entity.Employee;
 import com.aura.staffmanager.entity.EmployeeStatus;
@@ -57,15 +58,28 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeResponse updateEmployee(Long id, Employee employee) {
+    public EmployeeResponse updateEmployee(Long id, UpdateEmployeeRequest request) {
         Employee existingEmployee = employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
 
-        existingEmployee.setFirstName(employee.getFirstName());
-        existingEmployee.setLastName(employee.getLastName());
-        existingEmployee.setDepartment(employee.getDepartment());
-        existingEmployee.setPosition(employee.getPosition());
-        existingEmployee.setStatus(employee.getStatus());
+        // Check if email is being changed and if it's already taken
+        if (!existingEmployee.getEmail().equals(request.getEmail()) && 
+            employeeRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        Department department = departmentService.getDepartmentEntityById(request.getDepartmentId());
+
+        existingEmployee.setFirstName(request.getFirstName());
+        existingEmployee.setLastName(request.getLastName());
+        existingEmployee.setEmail(request.getEmail());
+        existingEmployee.setPhone(request.getPhone());
+        existingEmployee.setDepartment(department);
+        existingEmployee.setPosition(request.getPosition());
+        existingEmployee.setHireDate(request.getHireDate());
+        existingEmployee.setSalary(request.getSalary());
+        existingEmployee.setAddress(request.getAddress());
+        existingEmployee.setStatus(request.getStatus());
 
         Employee updatedEmployee = employeeRepository.save(existingEmployee);
         return mapToResponse(updatedEmployee);

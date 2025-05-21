@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,7 @@ import Profile from "./pages/Profile";
 import MyLeave from "./pages/MyLeave";
 import Directory from "./pages/Directory";
 import NotFound from "./pages/NotFound";
+import Salary from "@/pages/Salary";
 
 // Auth Guard component
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
@@ -62,6 +62,10 @@ const App = () => (
             <Route 
               path="/directory" 
               element={<AuthGuard><Directory /></AuthGuard>} 
+            />
+            <Route 
+              path="/salary" 
+              element={<AuthGuard><Salary /></AuthGuard>} 
             />
             
             <Route path="*" element={<NotFound />} />

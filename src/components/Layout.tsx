@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Link, useLocation, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -13,7 +12,10 @@ import {
   User,
   CalendarCheck,
   FileText,
-  Home
+  Home,
+  LayoutDashboard,
+  Building2,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +81,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           icon: <CalendarCheck className="w-5 h-5" />,
           label: "Leave Requests",
         },
+        {
+          to: "/salary",
+          icon: <DollarSign className="w-5 h-5" />,
+          label: "Salary",
+        },
       ]
     : [
         {
@@ -100,6 +107,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           to: "/directory",
           icon: <FileText className="w-5 h-5" />,
           label: "Directory",
+        },
+        {
+          to: "/salary",
+          icon: <DollarSign className="w-5 h-5" />,
+          label: "Salary",
         },
       ];
 

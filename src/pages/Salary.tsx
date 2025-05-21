@@ -1,0 +1,522 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/components/ui/use-toast";
+import { DollarSign, Search, Plus, Edit, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Temporary interface until backend is implemented
+interface Salary {
+  id: number;
+  employeeId: number;
+  employeeName: string;
+  baseSalary: number;
+  bonus: number;
+  deductions: number;
+  netSalary: number;
+  month: string;
+  year: number;
+  status: "PAID" | "PENDING" | "PROCESSING";
+}
+
+const salarySchema = z.object({
+  employeeId: z.coerce.number().min(1, "Employee is required"),
+  baseSalary: z.coerce.number().min(0, "Base salary must be a positive number"),
+  bonus: z.coerce.number().min(0, "Bonus must be a positive number"),
+  deductions: z.coerce.number().min(0, "Deductions must be a positive number"),
+  month: z.string().min(1, "Month is required"),
+  year: z.coerce.number().min(2000, "Year must be valid"),
+  status: z.enum(["PAID", "PENDING", "PROCESSING"]),
+});
+
+type SalaryFormValues = z.infer<typeof salarySchema>;
+
+export default function Salary() {
+  const [salaries, setSalaries] = useState<Salary[]>([
+    {
+      id: 1,
+      employeeId: 1,
+      employeeName: "John Doe",
+      baseSalary: 5000,
+      bonus: 500,
+      deductions: 1000,
+      netSalary: 4500,
+      month: "March",
+      year: 2024,
+      status: "PAID"
+    },
+    {
+      id: 2,
+      employeeId: 2,
+      employeeName: "Jane Smith",
+      baseSalary: 6000,
+      bonus: 600,
+      deductions: 1200,
+      netSalary: 5400,
+      month: "March",
+      year: 2024,
+      status: "PENDING"
+    }
+  ]);
+  const [isLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingSalary, setEditingSalary] = useState<Salary | null>(null);
+  const [deletingSalary, setDeletingSalary] = useState<Salary | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const { toast } = useToast();
+  
+  const form = useForm<SalaryFormValues>({
+    resolver: zodResolver(salarySchema),
+    defaultValues: {
+      employeeId: 0,
+      baseSalary: 0,
+      bonus: 0,
+      deductions: 0,
+      month: new Date().toLocaleString('default', { month: 'long' }),
+      year: new Date().getFullYear(),
+      status: "PENDING",
+    },
+  });
+
+  const filteredSalaries = salaries.filter(salary => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      salary.employeeName.toLowerCase().includes(searchLower) ||
+      salary.month.toLowerCase().includes(searchLower) ||
+      salary.status.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const openNewSalaryDialog = () => {
+    form.reset({
+      employeeId: 0,
+      baseSalary: 0,
+      bonus: 0,
+      deductions: 0,
+      month: new Date().toLocaleString('default', { month: 'long' }),
+      year: new Date().getFullYear(),
+      status: "PENDING",
+    });
+    setEditingSalary(null);
+    setIsDialogOpen(true);
+  };
+
+  const openEditSalaryDialog = (salary: Salary) => {
+    form.reset({
+      employeeId: salary.employeeId,
+      baseSalary: salary.baseSalary,
+      bonus: salary.bonus,
+      deductions: salary.deductions,
+      month: salary.month,
+      year: salary.year,
+      status: salary.status,
+    });
+    setEditingSalary(salary);
+    setIsDialogOpen(true);
+  };
+
+  const confirmDelete = (salary: Salary) => {
+    setDeletingSalary(salary);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteSalary = () => {
+    if (!deletingSalary) return;
+    
+    setSalaries(salaries.filter(s => s.id !== deletingSalary.id));
+    toast({
+      title: "Success",
+      description: "Salary record deleted successfully",
+    });
+    setIsDeleteDialogOpen(false);
+    setDeletingSalary(null);
+  };
+
+  const onSubmit = async (data: SalaryFormValues) => {
+    try {
+      const netSalary = data.baseSalary + data.bonus - data.deductions;
+      
+      if (editingSalary) {
+        // Update existing salary
+        const updatedSalary = {
+          ...editingSalary,
+          ...data,
+          netSalary,
+        };
+        setSalaries(salaries.map(s => 
+          s.id === editingSalary.id ? updatedSalary : s
+        ));
+        toast({
+          title: "Success",
+          description: "Salary record updated successfully",
+        });
+      } else {
+        // Create new salary
+        const newSalary: Salary = {
+          id: Math.max(...salaries.map(s => s.id)) + 1,
+          employeeId: data.employeeId,
+          employeeName: "New Employee", // This would come from the backend
+          baseSalary: data.baseSalary,
+          bonus: data.bonus,
+          deductions: data.deductions,
+          netSalary,
+          month: data.month,
+          year: data.year,
+          status: data.status,
+        };
+        setSalaries([...salaries, newSalary]);
+        toast({
+          title: "Success",
+          description: "Salary record created successfully",
+        });
+      }
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to save salary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save salary record",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="w-8 h-8 border-4 border-company-blue border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-company-blue">Salary Management</h1>
+          <p className="text-muted-foreground mt-1">Manage employee salary records</p>
+        </div>
+        <Button onClick={openNewSalaryDialog} className="mt-3 sm:mt-0">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Salary Record
+        </Button>
+      </div>
+
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by employee name, month, or status..."
+          className="pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="py-3 px-4 text-left font-medium text-sm">Employee</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Month</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Base Salary</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Bonus</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Deductions</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Net Salary</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Status</th>
+                <th className="py-3 px-4 text-right font-medium text-sm">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-muted">
+              {filteredSalaries.length > 0 ? (
+                filteredSalaries.map((salary) => (
+                  <tr key={salary.id} className="hover:bg-muted/30">
+                    <td className="py-3 px-4">{salary.employeeName}</td>
+                    <td className="py-3 px-4">{salary.month} {salary.year}</td>
+                    <td className="py-3 px-4">${salary.baseSalary.toLocaleString()}</td>
+                    <td className="py-3 px-4">${salary.bonus.toLocaleString()}</td>
+                    <td className="py-3 px-4">${salary.deductions.toLocaleString()}</td>
+                    <td className="py-3 px-4 font-medium">${salary.netSalary.toLocaleString()}</td>
+                    <td className="py-3 px-4">
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-xs",
+                        salary.status === "PAID" && "bg-company-success/20 text-company-success",
+                        salary.status === "PENDING" && "bg-company-warning/20 text-company-warning",
+                        salary.status === "PROCESSING" && "bg-company-blue/20 text-company-blue"
+                      )}>
+                        {salary.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditSalaryDialog(salary)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => confirmDelete(salary)}
+                        className="text-company-danger hover:text-company-danger/80 hover:bg-company-danger/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                    <DollarSign className="w-12 h-12 mx-auto mb-3 text-muted-foreground/60" />
+                    {searchTerm ? "No salary records match your search" : "No salary records found"}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Salary Form Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSalary ? "Edit Salary Record" : "Add New Salary Record"}
+            </DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="employeeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employee</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select employee" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">John Doe</SelectItem>
+                          <SelectItem value="2">Jane Smith</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="baseSalary"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Base Salary</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Base salary"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="bonus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bonus</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Bonus amount"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="deductions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Deductions</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Deductions amount"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="month"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Month</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select month" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const month = new Date(0, i).toLocaleString('default', { month: 'long' });
+                            return (
+                              <SelectItem key={month} value={month}>
+                                {month}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="year"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Year</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Year"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="PAID">Paid</SelectItem>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="PROCESSING">Processing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingSalary ? "Save Changes" : "Add Salary Record"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <p>
+            Are you sure you want to delete the salary record for{" "}
+            <span className="font-semibold">
+              {deletingSalary?.employeeName}
+            </span>
+            ? This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteSalary}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+} 

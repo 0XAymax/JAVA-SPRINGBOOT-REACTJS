@@ -1,9 +1,12 @@
 package com.aura.staffmanager.service;
 
+import com.aura.staffmanager.dto.employee.CreateEmployeeRequest;
 import com.aura.staffmanager.dto.employee.EmployeeResponse;
+import com.aura.staffmanager.entity.Department;
 import com.aura.staffmanager.entity.Employee;
 import com.aura.staffmanager.entity.EmployeeStatus;
 import com.aura.staffmanager.entity.User;
+import com.aura.staffmanager.exception.ResourceNotFoundException;
 import com.aura.staffmanager.repository.EmployeeRepository;
 import com.aura.staffmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
+    private final DepartmentService departmentService;
 
     public List<EmployeeResponse> getAllEmployees() {
         return employeeRepository.findAll().stream()
@@ -33,12 +37,21 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeResponse createEmployee(Employee employee) {
-        if (employeeRepository.existsByEmail(employee.getEmail())) {
-            throw new RuntimeException("Email already exists");
-        }
+    public EmployeeResponse createEmployee(CreateEmployeeRequest request) {
+        Department department = departmentService.getDepartmentEntityById(request.getDepartmentId());
+        
+        Employee employee = new Employee();
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setEmail(request.getEmail());
+        employee.setPhone(request.getPhone());
+        employee.setDepartment(department);
+        employee.setPosition(request.getPosition());
+        employee.setHireDate(request.getHireDate());
+        employee.setSalary(request.getSalary());
+        employee.setAddress(request.getAddress());
+        employee.setStatus(request.getStatus());
 
-        employee.setStatus(EmployeeStatus.ACTIVE);
         Employee savedEmployee = employeeRepository.save(employee);
         return mapToResponse(savedEmployee);
     }
@@ -72,7 +85,8 @@ public class EmployeeService {
                 .firstName(employee.getFirstName())
                 .lastName(employee.getLastName())
                 .email(employee.getEmail())
-                .department(employee.getDepartment())
+                .departmentId(employee.getDepartment().getId())
+                .departmentName(employee.getDepartment().getName())
                 .position(employee.getPosition())
                 .hireDate(employee.getHireDate())
                 .status(employee.getStatus())

@@ -22,13 +22,23 @@ public class Employee {
     private String email;
 
     @Column(nullable = false)
-    private String department;
+    private String phone;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department", nullable = false)
+    private Department department;
 
     @Column(nullable = false)
     private String position;
 
-    @Column(name = "hire_date", nullable = false)
+    @Column(nullable = false)
     private LocalDate hireDate;
+
+    @Column(nullable = false)
+    private Double salary;
+
+    @Column(nullable = false)
+    private String address;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

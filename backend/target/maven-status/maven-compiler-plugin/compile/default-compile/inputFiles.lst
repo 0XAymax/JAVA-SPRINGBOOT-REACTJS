@@ -2,6 +2,7 @@ D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\entity\Role.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\entity\LeaveRequest.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\dto\auth\LoginRequest.java
+D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\exception\ResourceNotFoundException.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\entity\Employee.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\dto\auth\RegisterRequest.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\service\DepartmentService.java
@@ -12,6 +13,7 @@ D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\controller\LeaveRequestController.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\dto\leave\UpdateLeaveRequest.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\dto\department\CreateDepartmentRequest.java
+D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\dto\employee\CreateEmployeeRequest.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\service\AuthService.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\StaffManagerApplication.java
 D:\PROJECTS\aura-staff-manager-main\backend\src\main\java\com\aura\staffmanager\entity\LeaveStatus.java

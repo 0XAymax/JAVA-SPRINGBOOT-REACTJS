@@ -3,6 +3,7 @@ package com.aura.staffmanager.service;
 import com.aura.staffmanager.dto.department.CreateDepartmentRequest;
 import com.aura.staffmanager.dto.department.DepartmentResponse;
 import com.aura.staffmanager.entity.Department;
+import com.aura.staffmanager.exception.ResourceNotFoundException;
 import com.aura.staffmanager.repository.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,13 @@ public class DepartmentService {
 
     public DepartmentResponse getDepartmentById(Long id) {
         Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
         return mapToResponse(department);
+    }
+
+    public Department getDepartmentEntityById(Long id) {
+        return departmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
     }
 
     @Transactional

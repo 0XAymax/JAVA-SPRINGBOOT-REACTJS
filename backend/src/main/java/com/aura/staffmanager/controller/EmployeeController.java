@@ -1,5 +1,6 @@
 package com.aura.staffmanager.controller;
 
+import com.aura.staffmanager.dto.employee.CreateEmployeeRequest;
 import com.aura.staffmanager.dto.employee.EmployeeResponse;
 import com.aura.staffmanager.entity.Employee;
 import com.aura.staffmanager.service.EmployeeService;
@@ -31,9 +32,9 @@ public class EmployeeController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EmployeeResponse> createEmployee(@Valid @RequestBody Employee employee) {
-        return ResponseEntity.ok(employeeService.createEmployee(employee));
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    public ResponseEntity<EmployeeResponse> createEmployee(@Valid @RequestBody CreateEmployeeRequest request) {
+        return ResponseEntity.ok(employeeService.createEmployee(request));
     }
 
     @PutMapping("/{id}")

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,21 +22,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
-import { Department, Employee } from "@/types";
-import { getDepartments, createDepartment, updateDepartment, deleteDepartment, getEmployees } from "@/lib/api";
+import { DepartmentService, Department, CreateDepartmentRequest } from "@/api/department.service";
 import { Building, Plus, Edit, Trash2, Users } from "lucide-react";
 
 const departmentSchema = z.object({
   name: z.string().min(1, "Department name is required"),
   description: z.string().min(1, "Description is required"),
-  managerId: z.string().min(1, "Manager is required"),
 });
 
 type DepartmentFormValues = z.infer<typeof departmentSchema>;
 
 export default function Departments() {
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -51,7 +47,6 @@ export default function Departments() {
     defaultValues: {
       name: "",
       description: "",
-      managerId: "",
     },
   });
 
@@ -59,12 +54,8 @@ export default function Departments() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [deptData, empData] = await Promise.all([
-          getDepartments(),
-          getEmployees(),
-        ]);
+        const deptData = await DepartmentService.getAll();
         setDepartments(deptData);
-        setEmployees(empData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast({
@@ -84,7 +75,6 @@ export default function Departments() {
     form.reset({
       name: "",
       description: "",
-      managerId: "",
     });
     setEditingDepartment(null);
     setIsDialogOpen(true);
@@ -94,7 +84,6 @@ export default function Departments() {
     form.reset({
       name: department.name,
       description: department.description,
-      managerId: department.managerId,
     });
     setEditingDepartment(department);
     setIsDialogOpen(true);
@@ -109,7 +98,7 @@ export default function Departments() {
     if (!deletingDepartment) return;
     
     try {
-      await deleteDepartment(deletingDepartment.id);
+      await DepartmentService.delete(deletingDepartment.id);
       setDepartments(departments.filter(d => d.id !== deletingDepartment.id));
       toast({
         title: "Success",
@@ -129,25 +118,9 @@ export default function Departments() {
 
   const onSubmit = async (data: DepartmentFormValues) => {
     try {
-      const managerEmployee = employees.find(emp => emp.id === data.managerId);
-      if (!managerEmployee) {
-        toast({
-          title: "Error",
-          description: "Selected manager not found",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const managerName = `${managerEmployee.firstName} ${managerEmployee.lastName}`;
-      
       if (editingDepartment) {
         // Update existing department
-        const updatedDepartment = await updateDepartment(editingDepartment.id, {
-          ...data,
-          managerName,
-          employeeCount: editingDepartment.employeeCount // Keep the existing employee count
-        });
+        const updatedDepartment = await DepartmentService.update(editingDepartment.id, data);
         setDepartments(departments.map(dept => 
           dept.id === editingDepartment.id ? updatedDepartment : dept
         ));
@@ -157,11 +130,7 @@ export default function Departments() {
         });
       } else {
         // Create new department
-        const newDepartment = await createDepartment({
-          ...data,
-          managerName,
-          employeeCount: 0 // New departments start with 0 employees
-        });
+        const newDepartment = await DepartmentService.create(data);
         setDepartments([...departments, newDepartment]);
         toast({
           title: "Success",
@@ -240,10 +209,6 @@ export default function Departments() {
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Manager:</span>
-                    <span className="font-medium">{department.managerName}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Employees:</span>
                     <div className="flex items-center">
                       <Users className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -306,34 +271,6 @@ export default function Departments() {
                         className="resize-none" 
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="managerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Department Manager</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select manager" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.firstName} {employee.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

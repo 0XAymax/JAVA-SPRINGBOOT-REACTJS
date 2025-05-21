@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +11,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { LeaveRequest } from "@/types";
-import { getLeaveRequests, updateLeaveRequestStatus } from "@/lib/api";
+import LeaveService, { LeaveRequest } from "@/api/leave.service";
 import { Calendar, Check, X, Search, Filter, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +29,6 @@ export default function LeaveRequests() {
 
   const filteredRequests = leaveRequests.filter(request => {
     const matchesSearch = 
-      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.type.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -44,7 +41,7 @@ export default function LeaveRequests() {
     const fetchLeaveRequests = async () => {
       try {
         setIsLoading(true);
-        const data = await getLeaveRequests();
+        const data = await LeaveService.getAll();
         setLeaveRequests(data);
       } catch (error) {
         console.error("Failed to fetch leave requests:", error);
@@ -73,10 +70,12 @@ export default function LeaveRequests() {
     
     try {
       const status = actionType === "APPROVE" ? "APPROVED" : "REJECTED";
-      const updatedRequest = await updateLeaveRequestStatus(
+      const updatedRequest = await LeaveService.update(
         currentRequest.id,
-        status,
-        comments
+        {
+          status,
+          comment: comments
+        }
       );
       
       setLeaveRequests(leaveRequests.map(req => 
@@ -166,7 +165,7 @@ export default function LeaveRequests() {
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="py-3 px-4 text-left font-medium text-sm">Employee</th>
+                <th className="py-3 px-4 text-left font-medium text-sm">Employee ID</th>
                 <th className="py-3 px-4 text-left font-medium text-sm">Type</th>
                 <th className="py-3 px-4 text-left font-medium text-sm">Duration</th>
                 <th className="py-3 px-4 text-left font-medium text-sm">Reason</th>
@@ -178,7 +177,7 @@ export default function LeaveRequests() {
               {filteredRequests.length > 0 ? (
                 filteredRequests.map((request) => (
                   <tr key={request.id} className="hover:bg-muted/30">
-                    <td className="py-3 px-4">{request.employeeName}</td>
+                    <td className="py-3 px-4">{request.employeeId}</td>
                     <td className="py-3 px-4">{request.type}</td>
                     <td className="py-3 px-4">
                       {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
@@ -213,7 +212,7 @@ export default function LeaveRequests() {
                         </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">
-                          {request.comments ? "Has comments" : "No comments"}
+                          {request.reason ? "Has reason" : "No reason"}
                         </span>
                       )}
                     </td>
@@ -247,8 +246,8 @@ export default function LeaveRequests() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="font-medium">Employee:</span>
-                  <span>{currentRequest.employeeName}</span>
+                  <span className="font-medium">Employee ID:</span>
+                  <span>{currentRequest.employeeId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Leave Type:</span>

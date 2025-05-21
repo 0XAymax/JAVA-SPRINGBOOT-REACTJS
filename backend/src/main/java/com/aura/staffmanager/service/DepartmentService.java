@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,7 @@ public class DepartmentService {
         Department department = Department.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .employees(new ArrayList<>())
                 .build();
 
         Department savedDepartment = departmentRepository.save(department);

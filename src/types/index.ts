@@ -1,9 +1,8 @@
-
 export type User = {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "EMPLOYEE";
+  role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
   avatar?: string;
 };
 
@@ -45,9 +44,18 @@ export type LeaveRequest = {
   requestDate: string;
 };
 
+export type RegisterRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
+};
+
 export type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;

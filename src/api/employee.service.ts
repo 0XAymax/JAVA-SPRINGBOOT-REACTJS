@@ -5,9 +5,13 @@ export interface Employee {
     firstName: string;
     lastName: string;
     email: string;
-    department: string;
+    phone: string;
+    departmentId: number;
+    departmentName: string;
     position: string;
     hireDate: string;
+    salary: number;
+    address: string;
     status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -15,14 +19,17 @@ export interface CreateEmployeeRequest {
     firstName: string;
     lastName: string;
     email: string;
-    department: string;
+    phone: string;
+    departmentId: number;
+    departmentName: string;
     position: string;
     hireDate: string;
+    salary: number;
+    address: string;
+    status: 'ACTIVE' | 'INACTIVE';
 }
 
-export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> {
-    status?: 'ACTIVE' | 'INACTIVE';
-}
+export interface UpdateEmployeeRequest extends CreateEmployeeRequest {}
 
 const EmployeeService = {
     getAll: async (): Promise<Employee[]> => {

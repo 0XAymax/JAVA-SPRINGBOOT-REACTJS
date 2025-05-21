@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,16 +21,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
-import { Employee, Department } from "@/types";
-import { getEmployees, getDepartments, createEmployee, updateEmployee, deleteEmployee } from "@/lib/api";
 import { Users, UserPlus, Edit, Trash2, Search } from "lucide-react";
+import EmployeeService, { Employee, CreateEmployeeRequest, UpdateEmployeeRequest } from "@/api/employee.service";
+import DepartmentService, { Department } from "@/api/department.service";
 
 const employeeSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
-  departmentId: z.string().min(1, "Department is required"),
+  departmentId: z.coerce.number().min(1, "Department is required"),
   position: z.string().min(1, "Position is required"),
   hireDate: z.string().min(1, "Hire date is required"),
   salary: z.coerce.number().min(0, "Salary must be a positive number"),
@@ -60,7 +59,7 @@ export default function Employees() {
       lastName: "",
       email: "",
       phone: "",
-      departmentId: "",
+      departmentId: 0,
       position: "",
       hireDate: new Date().toISOString().split("T")[0],
       salary: 0,
@@ -84,10 +83,13 @@ export default function Employees() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        console.log('Employees: Starting to fetch data');
         const [empData, deptData] = await Promise.all([
-          getEmployees(),
-          getDepartments(),
+          EmployeeService.getAll(),
+          DepartmentService.getAll(),
         ]);
+        console.log('Employees: Departments fetched:', deptData);
+        console.log('Employees: Employees fetched:', empData);
         setEmployees(empData);
         setDepartments(deptData);
       } catch (error) {
@@ -111,7 +113,7 @@ export default function Employees() {
       lastName: "",
       email: "",
       phone: "",
-      departmentId: "",
+      departmentId: 0,
       position: "",
       hireDate: new Date().toISOString().split("T")[0],
       salary: 0,
@@ -123,8 +125,6 @@ export default function Employees() {
   };
 
   const openEditEmployeeDialog = (employee: Employee) => {
-    const department = departments.find(dept => dept.id === employee.departmentId);
-    
     form.reset({
       firstName: employee.firstName,
       lastName: employee.lastName,
@@ -150,7 +150,7 @@ export default function Employees() {
     if (!deletingEmployee) return;
     
     try {
-      await deleteEmployee(deletingEmployee.id);
+      await EmployeeService.delete(deletingEmployee.id);
       setEmployees(employees.filter(e => e.id !== deletingEmployee.id));
       toast({
         title: "Success",
@@ -170,14 +170,24 @@ export default function Employees() {
 
   const onSubmit = async (data: EmployeeFormValues) => {
     try {
-      const departmentName = departments.find(dept => dept.id === data.departmentId)?.name || "";
+      const departmentName = departments.find(dept => dept.id === Number(data.departmentId))?.name || "";
+      const employeeData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        departmentId: Number(data.departmentId),
+        departmentName,
+        position: data.position,
+        hireDate: data.hireDate,
+        salary: data.salary,
+        address: data.address,
+        status: data.status
+      };
       
       if (editingEmployee) {
         // Update existing employee
-        const updatedEmployee = await updateEmployee(editingEmployee.id, {
-          ...data,
-          departmentName
-        });
+        const updatedEmployee = await EmployeeService.update(editingEmployee.id, employeeData);
         setEmployees(employees.map(emp => 
           emp.id === editingEmployee.id ? updatedEmployee : emp
         ));
@@ -187,10 +197,7 @@ export default function Employees() {
         });
       } else {
         // Create new employee
-        const newEmployee = await createEmployee({
-          ...data,
-          departmentName
-        });
+        const newEmployee = await EmployeeService.create(employeeData);
         setEmployees([...employees, newEmployee]);
         toast({
           title: "Success",
@@ -381,8 +388,8 @@ export default function Employees() {
                     <FormItem>
                       <FormLabel>Department</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        value={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -391,7 +398,7 @@ export default function Employees() {
                         </FormControl>
                         <SelectContent>
                           {departments.map((dept) => (
-                            <SelectItem key={dept.id} value={dept.id}>
+                            <SelectItem key={dept.id} value={dept.id.toString()}>
                               {dept.name}
                             </SelectItem>
                           ))}

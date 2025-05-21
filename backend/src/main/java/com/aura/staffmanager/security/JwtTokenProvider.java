@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
+import io.jsonwebtoken.security.SecurityException;
 import java.security.Key;
 import java.util.Date;
 
@@ -58,7 +58,7 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (SignatureException e) {
+        } catch (SecurityException e) {
             logger.error("Invalid JWT signature: {}", e.getMessage());
             return false;
         } catch (MalformedJwtException e) {

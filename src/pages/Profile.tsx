@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { User, Calendar, Mail, Phone, Building, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EmployeeService, { Employee } from "@/api/employee.service";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -18,8 +18,33 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [employeeData, setEmployeeData] = useState<Employee | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!user) return null;
+  useEffect(() => {
+    const fetchEmployeeData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const data = await EmployeeService.getById(user.id);
+        console.log("EMployee Data :",data)
+        setEmployeeData(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch employee data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEmployeeData();
+  }, [user?.id, toast]);
+
+  if (!user || isLoading) return null;
+  if (!employeeData) return <div>No employee data found</div>;
 
   const handleChangePassword = () => {
     setPasswordError("");
@@ -29,8 +54,8 @@ export default function Profile() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setPasswordError("Password must be at least 8 characters");
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
       return;
     }
 
@@ -53,21 +78,6 @@ export default function Profile() {
     setConfirmPassword("");
   };
 
-  // Mock user data for the profile
-  const employeeData = {
-    id: user.id,
-    name: user.name,
-    position: "Software Engineer",
-    department: "Engineering",
-    email: user.email,
-    phone: "555-1234",
-    address: "123 Main St, San Francisco, CA 94105",
-    hireDate: "2022-03-15",
-    employeeId: "EMP-001",
-    manager: "John Manager",
-    status: "ACTIVE"
-  };
-
   return (
     <div>
       <h1 className="text-2xl font-bold text-company-blue mb-6">My Profile</h1>
@@ -84,14 +94,14 @@ export default function Profile() {
                   {user.avatar ? (
                     <img 
                       src={user.avatar} 
-                      alt={employeeData.name} 
+                      alt={`${employeeData.firstName} ${employeeData.lastName}`} 
                       className="h-full w-full rounded-full object-cover"
                     />
                   ) : (
                     <User className="h-16 w-16 text-company-blue" />
                   )}
                 </div>
-                <h2 className="text-xl font-semibold">{employeeData.name}</h2>
+                <h2 className="text-xl font-semibold">{`${employeeData.firstName} ${employeeData.lastName}`}</h2>
                 <p className="text-muted-foreground">{employeeData.position}</p>
                 <div className={cn(
                   "mt-2 px-3 py-1 rounded-full text-xs font-medium",
@@ -121,7 +131,7 @@ export default function Profile() {
                     <Building className="h-5 w-5 text-muted-foreground mr-3" />
                     <div>
                       <div className="text-sm text-muted-foreground">Department</div>
-                      <div>{employeeData.department}</div>
+                      <div>{employeeData.departmentName}</div>
                     </div>
                   </div>
 
@@ -162,11 +172,11 @@ export default function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label className="text-sm text-muted-foreground">Employee ID</Label>
-                  <div className="font-medium">{employeeData.employeeId}</div>
+                  <div className="font-medium">{employeeData.id}</div>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Full Name</Label>
-                  <div className="font-medium">{employeeData.name}</div>
+                  <div className="font-medium">{`${employeeData.firstName} ${employeeData.lastName}`}</div>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Position</Label>
@@ -174,63 +184,11 @@ export default function Profile() {
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Department</Label>
-                  <div className="font-medium">{employeeData.department}</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Manager</Label>
-                  <div className="font-medium">{employeeData.manager}</div>
+                  <div className="font-medium">{employeeData.departmentName}</div>
                 </div>
                 <div>
                   <Label className="text-sm text-muted-foreground">Status</Label>
                   <div className="font-medium">{employeeData.status}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Email</Label>
-                  <div className="font-medium">{employeeData.email}</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Phone Number</Label>
-                  <div className="font-medium">{employeeData.phone}</div>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-sm text-muted-foreground">Address</Label>
-                  <div className="font-medium">{employeeData.address}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Emergency Contact</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Contact Name</Label>
-                  <div className="font-medium">Jane Smith</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Relationship</Label>
-                  <div className="font-medium">Spouse</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Phone Number</Label>
-                  <div className="font-medium">555-9876</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Email</Label>
-                  <div className="font-medium">jane.smith@example.com</div>
                 </div>
               </div>
             </CardContent>

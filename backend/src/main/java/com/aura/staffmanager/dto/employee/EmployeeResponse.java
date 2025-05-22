@@ -17,10 +17,13 @@ public class EmployeeResponse {
     private String firstName;
     private String lastName;
     private String email;
+    private String phone;
     private Long departmentId;
     private String departmentName;
     private String position;
     private LocalDate hireDate;
+    private Double salary;
+    private String address;
     private EmployeeStatus status;
     private Long userId;
 } 

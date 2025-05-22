@@ -99,10 +99,13 @@ public class EmployeeService {
                 .firstName(employee.getFirstName())
                 .lastName(employee.getLastName())
                 .email(employee.getEmail())
+                .phone(employee.getPhone())
                 .departmentId(employee.getDepartment().getId())
                 .departmentName(employee.getDepartment().getName())
                 .position(employee.getPosition())
                 .hireDate(employee.getHireDate())
+                .salary(employee.getSalary())
+                .address(employee.getAddress())
                 .status(employee.getStatus())
                 .userId(employee.getUser() != null ? employee.getUser().getId() : null)
                 .build();

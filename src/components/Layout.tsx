@@ -108,11 +108,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           icon: <FileText className="w-5 h-5" />,
           label: "Directory",
         },
-        {
-          to: "/salary",
-          icon: <DollarSign className="w-5 h-5" />,
-          label: "Salary",
-        },
       ];
 
   return (

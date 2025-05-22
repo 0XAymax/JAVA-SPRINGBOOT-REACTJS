@@ -37,7 +37,7 @@ export interface UpdateSalaryRequest {
 }
 
 class SalaryService {
-  private readonly BASE_URL = "/api/salaries";
+  private readonly BASE_URL = "/salaries";
 
   async getAll(): Promise<Salary[]> {
     const response = await api.get<Salary[]>(this.BASE_URL);

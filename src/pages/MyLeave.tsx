@@ -128,6 +128,29 @@ export default function MyLeave() {
 
   const onSubmit = async (data: LeaveRequestFormValues) => {
     try {
+      const startDate = new Date(data.startDate);
+      const endDate = new Date(data.endDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+      if (startDate < today) {
+        toast({
+          title: "Invalid Start Date",
+          description: "Start date cannot be in the past",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (startDate > endDate) {
+        toast({
+          title: "Invalid Date Range",
+          description: "Start date cannot be after end date",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (editingRequest) {
         const updatedRequest = await LeaveService.update(editingRequest.id, {
           type: data.type,

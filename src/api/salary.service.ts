@@ -8,7 +8,7 @@ export interface Salary {
   bonus: number;
   deductions: number;
   netSalary: number;
-  month: string;
+  month: string; // Format: "YYYY-MM"
   year: number;
   status: "PAID" | "PENDING" | "PROCESSING";
   comments?: string;
@@ -19,7 +19,7 @@ export interface CreateSalaryRequest {
   baseSalary: number;
   bonus: number;
   deductions: number;
-  month: string;
+  month: string; // Format: "YYYY-MM"
   year: number;
   status: "PAID" | "PENDING" | "PROCESSING";
   comments?: string;
@@ -30,7 +30,7 @@ export interface UpdateSalaryRequest {
   baseSalary: number;
   bonus: number;
   deductions: number;
-  month: string;
+  month: string; // Format: "YYYY-MM"
   year: number;
   status: "PAID" | "PENDING" | "PROCESSING";
   comments?: string;

@@ -110,6 +110,7 @@ public class SalaryServiceImpl implements SalaryService {
         salary.setBonus(dto.getBonus());
         salary.setDeductions(dto.getDeductions());
         salary.setMonth(dto.getMonth());
+        salary.setYear(dto.getMonth().getYear());
         salary.setStatus(dto.getStatus());
         salary.setComments(dto.getComments());
     }

@@ -23,8 +23,7 @@ import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
 import { DollarSign, Search, Plus, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import SalaryService from "@/api/salary.service";
-import type { Salary, CreateSalaryRequest, UpdateSalaryRequest } from "@/api/salary.service";
+import SalaryService, { Salary, CreateSalaryRequest, UpdateSalaryRequest, YearMonth } from "@/api/salary.service";
 import { useAuth } from "@/context/AuthContext";
 import EmployeeService, { Employee } from "@/api/employee.service";
 
@@ -158,8 +157,32 @@ export default function Salary() {
 
   const onSubmit = async (data: SalaryFormValues) => {
     try {
+      // Convert month name to month number (1-12)
+      const monthNumber = new Date(`${data.month} 1, 2000`).getMonth() + 1;
+      const formattedMonth = `${data.year}-${monthNumber.toString().padStart(2, '0')}`;
+      
+      // Ensure year is a valid number
+      const year = Number(data.year);
+      if (isNaN(year)) {
+        throw new Error("Invalid year value");
+      }
+      
+      // Create the request data with proper YearMonth format (YYYY-MM)
+      const requestData = {
+        employeeId: data.employeeId,
+        baseSalary: data.baseSalary,
+        bonus: data.bonus,
+        deductions: data.deductions,
+        month: formattedMonth,
+        year: year,
+        status: data.status,
+        comments: data.comments
+      };
+
+      console.log('Submitting salary data:', requestData); // Debug log
+
       if (editingSalary) {
-        const updatedSalary = await SalaryService.update(editingSalary.id, data as UpdateSalaryRequest);
+        const updatedSalary = await SalaryService.update(editingSalary.id, requestData as UpdateSalaryRequest);
         setSalaries(salaries.map(s => 
           s.id === editingSalary.id ? updatedSalary : s
         ));
@@ -168,7 +191,7 @@ export default function Salary() {
           description: "Salary record updated successfully",
         });
       } else {
-        const newSalary = await SalaryService.create(data as CreateSalaryRequest);
+        const newSalary = await SalaryService.create(requestData as CreateSalaryRequest);
         setSalaries([...salaries, newSalary]);
         toast({
           title: "Success",

@@ -15,6 +15,7 @@ public class SalaryDTO {
     private BigDecimal deductions;
     private BigDecimal netSalary;
     private YearMonth month;
+    private Integer year;
     private SalaryStatus status;
     private String comments;
 } 

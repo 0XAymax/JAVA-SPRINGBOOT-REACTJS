@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.YearMonth;
+import java.time.LocalDate;
+import com.aura.staffmanager.entity.converter.YearMonthConverter;
 
 @Data
 @Entity
@@ -29,6 +31,7 @@ public class Salary {
     @Column(nullable = false)
     private BigDecimal netSalary;
 
+    @Convert(converter = YearMonthConverter.class)
     @Column(nullable = false)
     private YearMonth month;
 

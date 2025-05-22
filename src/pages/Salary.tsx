@@ -23,7 +23,8 @@ import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
 import { DollarSign, Search, Plus, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import SalaryService, { Salary, CreateSalaryRequest, UpdateSalaryRequest, YearMonth } from "@/api/salary.service";
+import SalaryService from "@/api/salary.service";
+import type { Salary, CreateSalaryRequest, UpdateSalaryRequest } from "@/api/salary.service";
 import { useAuth } from "@/context/AuthContext";
 import EmployeeService, { Employee } from "@/api/employee.service";
 
@@ -180,7 +181,7 @@ export default function Salary() {
         month: formattedMonth,
         year: year,
         status: data.status,
-        comments: data.comments
+        comments: null
       };
 
       console.log('Submitting salary data:', requestData); // Debug log

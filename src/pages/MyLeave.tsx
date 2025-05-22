@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -23,14 +22,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
-import { LeaveRequest } from "@/types";
-import { getEmployeeLeaveRequests, createLeaveRequest } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
 import { Calendar, Plus, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import LeaveService, { LeaveRequest, CreateLeaveRequest } from "@/api/leave.service";
+import { useAuth } from "@/context/AuthContext";
 
 const leaveRequestSchema = z.object({
-  type: z.enum(["ANNUAL", "SICK", "PERSONAL", "OTHER"], {
+  type: z.enum(["VACATION", "SICK", "PERSONAL", "OTHER"], {
     required_error: "Please select a leave type",
   }),
   startDate: z.string().min(1, "Start date is required"),
@@ -58,7 +56,7 @@ export default function MyLeave() {
   const form = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestSchema),
     defaultValues: {
-      type: "ANNUAL",
+      type: "VACATION",
       startDate: new Date().toISOString().split("T")[0],
       endDate: new Date().toISOString().split("T")[0],
       reason: "",
@@ -67,11 +65,9 @@ export default function MyLeave() {
 
   useEffect(() => {
     const fetchLeaveRequests = async () => {
-      if (!user) return;
-      
       try {
         setIsLoading(true);
-        const data = await getEmployeeLeaveRequests(user.id);
+        const data = await LeaveService.getMyRequests();
         setLeaveRequests(data);
       } catch (error) {
         console.error("Failed to fetch leave requests:", error);
@@ -86,18 +82,16 @@ export default function MyLeave() {
     };
 
     fetchLeaveRequests();
-  }, [user, toast]);
+  }, [toast]);
 
   const onSubmit = async (data: LeaveRequestFormValues) => {
-    if (!user) return;
-    
     try {
-      const newRequest = await createLeaveRequest({
-        ...data,
-        employeeId: user.id,
-        employeeName: user.name,
+      const newRequest = await LeaveService.create({
+        type: data.type,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        reason: data.reason
       });
-      
       setLeaveRequests([newRequest, ...leaveRequests]);
       
       toast({
@@ -120,18 +114,18 @@ export default function MyLeave() {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return diffDays;
   };
 
   const getStatusColor = (status: LeaveRequest["status"]) => {
     switch (status) {
       case "APPROVED":
-        return "status-approved";
+        return "bg-company-success/20 text-company-success";
       case "PENDING":
-        return "status-pending";
+        return "bg-company-warning/20 text-company-warning";
       case "REJECTED":
-        return "status-rejected";
+        return "bg-company-danger/20 text-company-danger";
       default:
         return "";
     }
@@ -158,48 +152,6 @@ export default function MyLeave() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-company-blue">
-          <div className="flex items-center">
-            <div className="rounded-full bg-company-blue/10 p-3 mr-4">
-              <Calendar className="h-6 w-6 text-company-blue" />
-            </div>
-            <div>
-              <div className="text-muted-foreground text-sm">Annual Leave</div>
-              <div className="text-2xl font-bold">15 days</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-company-purple">
-          <div className="flex items-center">
-            <div className="rounded-full bg-company-purple/10 p-3 mr-4">
-              <Calendar className="h-6 w-6 text-company-purple" />
-            </div>
-            <div>
-              <div className="text-muted-foreground text-sm">Sick Leave</div>
-              <div className="text-2xl font-bold">10 days</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-company-success">
-          <div className="flex items-center">
-            <div className="rounded-full bg-company-success/10 p-3 mr-4">
-              <Calendar className="h-6 w-6 text-company-success" />
-            </div>
-            <div>
-              <div className="text-muted-foreground text-sm">Used Leave</div>
-              <div className="text-2xl font-bold">
-                {leaveRequests.filter(req => req.status === "APPROVED").reduce((total, req) => {
-                  return total + calculateDays(req.startDate, req.endDate);
-                }, 0)} days
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">Leave Requests History</h2>
@@ -214,7 +166,6 @@ export default function MyLeave() {
                   <th className="py-3 px-4 text-left font-medium text-sm">Days</th>
                   <th className="py-3 px-4 text-left font-medium text-sm">Reason</th>
                   <th className="py-3 px-4 text-left font-medium text-sm">Status</th>
-                  <th className="py-3 px-4 text-left font-medium text-sm">Comments</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-muted">
@@ -229,12 +180,9 @@ export default function MyLeave() {
                     </td>
                     <td className="py-3 px-4 max-w-[200px] truncate">{request.reason}</td>
                     <td className="py-3 px-4">
-                      <span className={cn("status-pill", getStatusColor(request.status))}>
+                      <span className={cn("px-2 py-1 rounded-full text-xs", getStatusColor(request.status))}>
                         {request.status}
                       </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {request.comments || "-"}
                     </td>
                   </tr>
                 ))}
@@ -280,7 +228,7 @@ export default function MyLeave() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="ANNUAL">Annual Leave</SelectItem>
+                        <SelectItem value="VACATION">Vacation</SelectItem>
                         <SelectItem value="SICK">Sick Leave</SelectItem>
                         <SelectItem value="PERSONAL">Personal Leave</SelectItem>
                         <SelectItem value="OTHER">Other</SelectItem>

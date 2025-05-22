@@ -6,12 +6,14 @@ import com.aura.staffmanager.dto.leave.UpdateLeaveRequest;
 import com.aura.staffmanager.entity.Employee;
 import com.aura.staffmanager.entity.LeaveRequest;
 import com.aura.staffmanager.entity.LeaveStatus;
+import com.aura.staffmanager.entity.LeaveType;
 import com.aura.staffmanager.repository.EmployeeRepository;
 import com.aura.staffmanager.repository.LeaveRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,7 +64,21 @@ public class LeaveRequestService {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
 
-        leaveRequest.setStatus(request.getStatus());
+        if (request.getStatus() != null) {
+            leaveRequest.setStatus(request.getStatus());
+        }
+        if (request.getType() != null) {
+            leaveRequest.setType(LeaveType.valueOf(request.getType()));
+        }
+        if (request.getStartDate() != null) {
+            leaveRequest.setStartDate(LocalDate.parse(request.getStartDate()));
+        }
+        if (request.getEndDate() != null) {
+            leaveRequest.setEndDate(LocalDate.parse(request.getEndDate()));
+        }
+        if (request.getReason() != null) {
+            leaveRequest.setReason(request.getReason());
+        }
         if (request.getComment() != null) {
             leaveRequest.setReason(leaveRequest.getReason() + "\nManager's comment: " + request.getComment());
         }

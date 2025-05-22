@@ -36,7 +36,6 @@ public class LeaveRequestController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<LeaveRequestResponse> getLeaveRequestById(@PathVariable Long id) {
         return ResponseEntity.ok(leaveRequestService.getLeaveRequestById(id));
     }
@@ -51,7 +50,6 @@ public class LeaveRequestController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<LeaveRequestResponse> updateLeaveRequest(
             @PathVariable Long id,
             @Valid @RequestBody UpdateLeaveRequest request) {
@@ -59,7 +57,6 @@ public class LeaveRequestController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteLeaveRequest(@PathVariable Long id) {
         leaveRequestService.deleteLeaveRequest(id);
         return ResponseEntity.noContent().build();

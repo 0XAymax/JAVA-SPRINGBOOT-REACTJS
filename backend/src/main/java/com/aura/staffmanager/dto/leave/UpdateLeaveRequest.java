@@ -6,7 +6,10 @@ import lombok.Data;
 
 @Data
 public class UpdateLeaveRequest {
-    @NotNull(message = "Status is required")
     private LeaveStatus status;
     private String comment;
+    private String type;
+    private String startDate;
+    private String endDate;
+    private String reason;
 } 

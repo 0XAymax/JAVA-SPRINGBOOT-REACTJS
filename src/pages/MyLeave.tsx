@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
-import { Calendar, Plus, CalendarCheck } from "lucide-react";
+import { Calendar, Plus, CalendarCheck, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LeaveService, { LeaveRequest, CreateLeaveRequest } from "@/api/leave.service";
 import { useAuth } from "@/context/AuthContext";
@@ -50,6 +50,9 @@ export default function MyLeave() {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
+  const [deletingRequest, setDeletingRequest] = useState<LeaveRequest | null>(null);
   
   const { toast } = useToast();
   
@@ -84,22 +87,77 @@ export default function MyLeave() {
     fetchLeaveRequests();
   }, [toast]);
 
-  const onSubmit = async (data: LeaveRequestFormValues) => {
+  const openEditDialog = (request: LeaveRequest) => {
+    setEditingRequest(request);
+    form.reset({
+      type: request.type,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      reason: request.reason,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const confirmDelete = (request: LeaveRequest) => {
+    setDeletingRequest(request);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingRequest) return;
+    
     try {
-      const newRequest = await LeaveService.create({
-        type: data.type,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        reason: data.reason
-      });
-      setLeaveRequests([newRequest, ...leaveRequests]);
-      
+      await LeaveService.delete(deletingRequest.id);
+      setLeaveRequests(leaveRequests.filter(req => req.id !== deletingRequest.id));
       toast({
         title: "Success",
-        description: "Leave request submitted successfully",
+        description: "Leave request deleted successfully",
       });
-      
+    } catch (error) {
+      console.error("Failed to delete leave request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete leave request",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeletingRequest(null);
+    }
+  };
+
+  const onSubmit = async (data: LeaveRequestFormValues) => {
+    try {
+      if (editingRequest) {
+        const updatedRequest = await LeaveService.update(editingRequest.id, {
+          type: data.type,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          reason: data.reason,
+          status: "PENDING"
+        });
+        setLeaveRequests(leaveRequests.map(req => 
+          req.id === editingRequest.id ? updatedRequest : req
+        ));
+        toast({
+          title: "Success",
+          description: "Leave request updated successfully",
+        });
+      } else {
+        const newRequest = await LeaveService.create({
+          type: data.type,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          reason: data.reason
+        });
+        setLeaveRequests([newRequest, ...leaveRequests]);
+        toast({
+          title: "Success",
+          description: "Leave request submitted successfully",
+        });
+      }
       setIsDialogOpen(false);
+      setEditingRequest(null);
     } catch (error) {
       console.error("Failed to submit leave request:", error);
       toast({
@@ -180,9 +238,30 @@ export default function MyLeave() {
                     </td>
                     <td className="py-3 px-4 max-w-[200px] truncate">{request.reason}</td>
                     <td className="py-3 px-4">
-                      <span className={cn("px-2 py-1 rounded-full text-xs", getStatusColor(request.status))}>
-                        {request.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("px-2 py-1 rounded-full text-xs", getStatusColor(request.status))}>
+                          {request.status}
+                        </span>
+                        {request.status === "PENDING" && (
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(request)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmDelete(request)}
+                              className="text-company-danger hover:text-company-danger/80 hover:bg-company-danger/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -204,11 +283,39 @@ export default function MyLeave() {
         </div>
       </div>
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <p>
+            Are you sure you want to delete this leave request? This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Leave Request Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Request Leave</DialogTitle>
+            <DialogTitle>
+              {editingRequest ? "Edit Leave Request" : "Request Leave"}
+            </DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -290,11 +397,16 @@ export default function MyLeave() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setEditingRequest(null);
+                  }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Submit Request</Button>
+                <Button type="submit">
+                  {editingRequest ? "Save Changes" : "Submit Request"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

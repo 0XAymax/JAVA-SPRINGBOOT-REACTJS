@@ -20,7 +20,11 @@ export interface CreateLeaveRequest {
 }
 
 export interface UpdateLeaveRequest {
-    status: 'APPROVED' | 'REJECTED';
+    type?: 'VACATION' | 'SICK' | 'PERSONAL' | 'OTHER';
+    startDate?: string;
+    endDate?: string;
+    reason?: string;
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED';
     comment?: string;
 }
 

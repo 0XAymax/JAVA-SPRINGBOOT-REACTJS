@@ -136,7 +136,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="mt-auto p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
             <Avatar>
-              <AvatarImage src={user.avatar} />
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
             <div>
@@ -244,7 +243,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border">
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={user.avatar} />
                     <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                   <div>

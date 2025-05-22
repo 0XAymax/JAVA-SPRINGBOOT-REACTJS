@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/components/ui/use-toast";
 import { Users, UserPlus, Edit, Trash2, Search } from "lucide-react";
-import EmployeeService, { Employee, CreateEmployeeRequest, UpdateEmployeeRequest } from "@/api/employee.service";
+import EmployeeService, { Employee} from "@/api/employee.service";
 import DepartmentService, { Department } from "@/api/department.service";
 
 const employeeSchema = z.object({

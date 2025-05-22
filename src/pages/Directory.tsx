@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Employee, Department } from "@/types";
-import { getEmployees, getDepartments } from "@/lib/api";
 import { Users, Search, Building, Phone, Mail } from "lucide-react";
+import EmployeeService,{ Employee}  from "@/api/employee.service";
+import DepartmentService, { Department } from "@/api/department.service";
 
 export default function Directory() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -20,17 +20,20 @@ export default function Directory() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        console.log('Employees: Starting to fetch data');
         const [empData, deptData] = await Promise.all([
-          getEmployees(),
-          getDepartments(),
+          EmployeeService.getAll(),
+          DepartmentService.getAll(),
         ]);
+        console.log('Employees: Departments fetched:', deptData);
+        console.log('Employees: Employees fetched:', empData);
         setEmployees(empData);
         setDepartments(deptData);
       } catch (error) {
-        console.error("Failed to fetch directory data:", error);
+        console.error("Failed to fetch data:", error);
         toast({
           title: "Error",
-          description: "Failed to load employee directory",
+          description: "Failed to load employees and departments",
           variant: "destructive",
         });
       } finally {
@@ -89,7 +92,6 @@ export default function Directory() {
             <Card key={employee.id} className="p-6 flex flex-col">
               <div className="flex items-start mb-4">
                 <Avatar className="h-14 w-14 mr-4">
-                  <AvatarImage src={employee.avatar} />
                   <AvatarFallback className="bg-company-blue/10 text-company-blue">
                     {getInitials(employee.firstName, employee.lastName)}
                   </AvatarFallback>

@@ -1,0 +1,1 @@
+ALTER TABLE salaries DROP COLUMN year; 

@@ -114,13 +114,17 @@ export default function Salary() {
   };
 
   const openEditSalaryDialog = (salary: Salary) => {
+    // Extract month name from the YearMonth string (e.g., "2024-10" -> "October")
+    const [year, month] = salary.month.split('-');
+    const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' });
+
     form.reset({
       employeeId: salary.employeeId,
       baseSalary: salary.baseSalary,
       bonus: salary.bonus,
       deductions: salary.deductions,
-      month: salary.month,
-      year: salary.year,
+      month: monthName,
+      year: parseInt(year),
       status: salary.status,
     });
     setEditingSalary(salary);

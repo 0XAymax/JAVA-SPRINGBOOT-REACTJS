@@ -6,11 +6,9 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Users, Search, Building, Phone, Mail } from "lucide-react";
 import EmployeeService,{ Employee}  from "@/api/employee.service";
-import DepartmentService, { Department } from "@/api/department.service";
 
 export default function Directory() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -21,14 +19,9 @@ export default function Directory() {
       try {
         setIsLoading(true);
         console.log('Employees: Starting to fetch data');
-        const [empData, deptData] = await Promise.all([
-          EmployeeService.getAll(),
-          DepartmentService.getAll(),
-        ]);
-        console.log('Employees: Departments fetched:', deptData);
+        const empData = await EmployeeService.getAll();
         console.log('Employees: Employees fetched:', empData);
         setEmployees(empData);
-        setDepartments(deptData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast({

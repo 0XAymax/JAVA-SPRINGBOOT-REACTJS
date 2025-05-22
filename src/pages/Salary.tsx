@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import SalaryService from "@/api/salary.service";
 import type { Salary, CreateSalaryRequest, UpdateSalaryRequest } from "@/api/salary.service";
 import { useAuth } from "@/context/AuthContext";
+import EmployeeService, { Employee } from "@/api/employee.service";
 
 const salarySchema = z.object({
   employeeId: z.coerce.number().min(1, "Employee is required"),
@@ -41,6 +42,7 @@ type SalaryFormValues = z.infer<typeof salarySchema>;
 
 export default function Salary() {
   const [salaries, setSalaries] = useState<Salary[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -65,31 +67,29 @@ export default function Salary() {
   });
 
   useEffect(() => {
-    fetchSalaries();
-  }, []);
-
-  const fetchSalaries = async () => {
-    try {
-      setIsLoading(true);
-      let data: Salary[];
-      if (user?.role === "ADMIN") {
-        data = await SalaryService.getAll();
-      } else {
-        const employeeId = user?.id ? parseInt(user.id, 10) : 0;
-        data = await SalaryService.getEmployeeSalaries(employeeId);
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [salaryData, employeeData] = await Promise.all([
+          user?.role === "ADMIN" ? SalaryService.getAll() : SalaryService.getEmployeeSalaries(parseInt(user?.id || "0", 10)),
+          EmployeeService.getAll()
+        ]);
+        setSalaries(salaryData);
+        setEmployees(employeeData);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load salary records",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      setSalaries(data);
-    } catch (error) {
-      console.error("Failed to fetch salaries:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load salary records",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchData();
+  }, [user, toast]);
 
   const filteredSalaries = salaries.filter(salary => {
     const searchLower = searchTerm.toLowerCase();
@@ -318,8 +318,11 @@ export default function Salary() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="1">John Doe</SelectItem>
-                            <SelectItem value="2">Jane Smith</SelectItem>
+                            {employees.map((employee) => (
+                              <SelectItem key={employee.id} value={employee.id.toString()}>
+                                {employee.firstName} {employee.lastName}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
